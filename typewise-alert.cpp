@@ -6,44 +6,25 @@ typedef struct {
     int upperLimit;
 } CoolingLimits;
 
-CoolingLimits getCoolingLimits(CoolingType coolingType) {
-    switch(coolingType) {
-        case PASSIVE_COOLING:
-            return (CoolingLimits){0, 35};
-        case HI_ACTIVE_COOLING:
-            return (CoolingLimits){0, 45};
-        case MED_ACTIVE_COOLING:
-            return (CoolingLimits){0, 40};
-        default:
-            return (CoolingLimits){0, 0}; // default case to handle any unexpected input
-    }
-}
+CoolingLimits coolingLimitsTable[] = {
+    {0, 35}, // PASSIVE_COOLING
+    {0, 45}, // HI_ACTIVE_COOLING
+    {0, 40}  // MED_ACTIVE_COOLING
+};
 
 BreachType inferBreach(double value, double lowerLimit, double upperLimit) {
-    if(value < lowerLimit) {
+    if (value < lowerLimit) {
         return TOO_LOW;
     }
-    if(value > upperLimit) {
+    if (value > upperLimit) {
         return TOO_HIGH;
     }
     return NORMAL;
 }
 
 BreachType classifyTemperatureBreach(CoolingType coolingType, double temperatureInC) {
-    CoolingLimits limits = getCoolingLimits(coolingType);
+    CoolingLimits limits = coolingLimitsTable[coolingType];
     return inferBreach(temperatureInC, limits.lowerLimit, limits.upperLimit);
-}
-
-void checkAndAlert(AlertTarget alertTarget, BatteryCharacter batteryChar, double temperatureInC) {
-    BreachType breachType = classifyTemperatureBreach(batteryChar.coolingType, temperatureInC);
-    switch(alertTarget) {
-        case TO_CONTROLLER:
-            sendToController(breachType);
-            break;
-        case TO_EMAIL:
-            sendToEmail(breachType);
-            break;
-    }
 }
 
 void sendToController(BreachType breachType) {
@@ -51,13 +32,28 @@ void sendToController(BreachType breachType) {
     printf("%x : %x\n", header, breachType);
 }
 
-void sendToEmail(BreachType breachType) {
+void sendTooLowEmail() {
     const char* recepient = "a.b@c.com";
-    if (breachType == TOO_LOW) {
-        printf("To: %s\n", recepient);
-        printf("Hi, the temperature is too low\n");
-    } else if (breachType == TOO_HIGH) {
-        printf("To: %s\n", recepient);
-        printf("Hi, the temperature is too high\n");
+    printf("To: %s\n", recepient);
+    printf("Hi, the temperature is too low\n");
+}
+
+void sendTooHighEmail() {
+    const char* recepient = "a.b@c.com";
+    printf("To: %s\n", recepient);
+    printf("Hi, the temperature is too high\n");
+}
+
+void sendToEmail(BreachType breachType) {
+    void (*emailHandlers[])(void) = {NULL, sendTooLowEmail, sendTooHighEmail};
+    if (breachType != NORMAL) {
+        emailHandlers[breachType]();
     }
+}
+
+void checkAndAlert(AlertTarget alertTarget, BatteryCharacter batteryChar, double temperatureInC) {
+    BreachType breachType = classifyTemperatureBreach(batteryChar.coolingType, temperatureInC);
+    
+    AlertHandler alertHandlers[] = {sendToController, sendToEmail};
+    alertHandlers[alertTarget](breachType);
 }
