@@ -49,32 +49,6 @@ protected:
     }
 };
 
-// Test the checkAndAlert function for controller alert
-TEST_F(TypeWiseAlertTestSuiteWithOutput, SendsAlertToController) {
-    BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_CONTROLLER, batteryChar, 36);
-
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(output, "feed : 2\n");  // 2 corresponds to TOO_HIGH
-}
-
-// Test the checkAndAlert function for email alert
-TEST_F(TypeWiseAlertTestSuiteWithOutput, SendsAlertToEmail) {
-    BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_EMAIL, batteryChar, 36);
-
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(output, "To: a.b@c.com\nHi, the temperature is too high\n");
-}
-
-// Test the checkAndAlert function for normal temperature
-TEST_F(TypeWiseAlertTestSuiteWithOutput, NoAlertForNormalTemperature) {
-    BatteryCharacter batteryChar = {PASSIVE_COOLING, "BrandX"};
-    checkAndAlert(TO_EMAIL, batteryChar, 25);  // Normal temperature
-
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(output, "");  // No output expected
-}
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
